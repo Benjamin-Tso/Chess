@@ -53,10 +53,35 @@ public class Board {
         }
         return out;
     }
-    public void movePiece(String move){
-        
+    public void movePiece(String start, String move){
+        int[] startPos = parseMove(start);
+        int[] movePos = parseMove(move);
+        if(movePos==null || startPos==null){
+            System.out.println("invalid move");
+            return;
+        }
+        boolean taking = board[movePos[0]][movePos[1]]!=null && board[movePos[0]][movePos[1]].isWhite()!= board[startPos[0]][startPos[1]].isWhite();
+        if(board[startPos[0]][startPos[1]].isLegalMove(movePos,taking)){
+            board[movePos[0]][movePos[1]] = board[startPos[0]][startPos[1]];
+            board[startPos[0]][startPos[1]] = null;
+            board[startPos[0]][startPos[1]].setPos(movePos);
+        }
     }
     public int[] parseMove(String move){ //turns move like G5 into coordinates {4,6}
-        return new int[] {0};//placeholder
+        String columns = "abcdefgh";
+        int row;
+        try{
+            row = Integer.parseInt(String.valueOf(move.charAt(1)));
+            if(row>8){
+                return null;
+            }
+        }catch(NumberFormatException ignored){
+            return null;
+        }
+        String column = String.valueOf(move.charAt(0)).toLowerCase();
+        if(!columns.contains(column)) {
+            return null;
+        }
+        return new int[] {row-1, columns.indexOf(column)};
     }
 }

@@ -6,4 +6,9 @@ public class Bishop extends Piece{
         return "♗";
     }
 
+    @Override
+    public boolean isLegalMove(int[] targetPos, boolean taking) {
+        return Math.abs(targetPos[0]-getPos()[0]) == Math.abs(targetPos[1]-getPos()[1]);
+    }
+
 }

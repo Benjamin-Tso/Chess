@@ -17,4 +17,5 @@ abstract class Piece {
     }
 
     public abstract String getSymbol();
+    public abstract boolean isLegalMove(int[] targetPos, boolean taking);
 }

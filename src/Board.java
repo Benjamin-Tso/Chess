@@ -60,19 +60,20 @@ public class Board {
         }
         return out;
     }
-    public void movePiece(String start, String move){
+    public boolean movePiece(String start, String move){
         int[] startPos = parseMove(start);
         int[] movePos = parseMove(move);
         if(movePos==null || startPos==null){
             System.out.println("invalid move");
-            return;
+            return false;
         }
         if(board[startPos[0]][startPos[1]]==null||board[startPos[0]][startPos[1]].isWhite()!= whitePlaying){
             System.out.println("invalid piece");
-            return;
+            return false;
         }
         if(board[startPos[0]][startPos[1]] instanceof King){ //check for check and checkmate
             //TODO : check movePos for possible checks, if all possible moves are check, set checkmate to !isWhite of the moving King
+
         }
         if(board[startPos[0]][startPos[1]] instanceof Pawn){
             movePos = new int[] {movePos[0],movePos[1], (board[movePos[0]][movePos[1]]!=null && board[movePos[0]][movePos[1]].isWhite()!= board[startPos[0]][startPos[1]].isWhite())? 0:1};//index 2 specifically for pawn, because taking has special movement rule, 1 for taking, 0 for not
@@ -80,15 +81,18 @@ public class Board {
         if(board[startPos[0]][startPos[1]].isLegalMove(movePos)){
             if(isBlocked(board[startPos[0]][startPos[1]], movePos)){
                 System.out.println("there is a piece in the way");
-                return;
+                return false;
             }
             board[movePos[0]][movePos[1]] = board[startPos[0]][startPos[1]];
             board[startPos[0]][startPos[1]] = null;
             board[startPos[0]][startPos[1]].setPos(movePos);
+            if((whitePlaying? wKing : bKing).isCheck()){
+
+            }
         }
         else {
             System.out.println("illegal move");
-            return;
+            return false;
         }
         King targetKing = board[movePos[0]][movePos[1]].isWhite()? bKing: wKing;
         int[] targetPos = targetKing.getPos();
@@ -98,6 +102,7 @@ public class Board {
         if(board[movePos[0]][movePos[1]].isLegalMove(targetPos)){
             targetKing.setCheck(true);
         }
+        return true;
     }
     public int[] parseMove(String move){ //turns move like G5 into coordinates {4,6}
         String columns = "abcdefgh";
@@ -120,7 +125,7 @@ public class Board {
         if(p instanceof Knight || p instanceof King){//can't be blocked
             return false;
         }
-        if(p instanceof Pawn){//blocked if piece is in front
+        else if(p instanceof Pawn){//blocked if piece is in front
             boolean test1 = board[move[0]][move[1]]!=null; //piece at target
             boolean test2 = false;
             if(((Pawn) p).isFirstMove()){
@@ -128,14 +133,14 @@ public class Board {
             }
             return test1 || test2;
         }
-        if(p instanceof Bishop || (p instanceof Queen && (p.getPos()[0]!=move[0]&&p.getPos()[1]!=move[1]) )){ // bishop or queen w/ bishop movement
+        else if(p instanceof Bishop || (p instanceof Queen && (p.getPos()[0]!=move[0]&&p.getPos()[1]!=move[1]) )){ // bishop or queen w/ bishop movement
             for(int i = 1; i!=Math.abs(p.getPos()[0]-move[0]); i+= (move[0]-p.getPos()[0])/Math.abs(move[0]-p.getPos()[0])){ // diagonal towards move
                 if(board[p.getPos()[0]+i][p.getPos()[1]+1]!=null){
                     return true;
                 }
             }
         }
-        if(p instanceof Rook ||(p instanceof Queen && (p.getPos()[0]==move[0] || p.getPos()[1]==move[1])) ){ // rook or queen w/ rook movement
+        else if(p instanceof Rook ||(p instanceof Queen && (p.getPos()[0]==move[0] || p.getPos()[1]==move[1])) ){ // rook or queen w/ rook movement
             if(p.getPos()[0]==move[0]){//horizontal towards move
                 for(int i = 0; i!=Math.abs(move[1]-p.getPos()[1]); i+= move[1]-p.getPos()[1]/Math.abs(move[1]-p.getPos()[1])){
                     if(board[p.getPos()[0]][p.getPos()[1]+i]!=null){
@@ -151,6 +156,11 @@ public class Board {
                 }
             }
         }
-        return true;//placeholder
+        return true;
     }
+    public boolean isCheck(King k, int[] move){
+
+        return true;
+    }
+
 }

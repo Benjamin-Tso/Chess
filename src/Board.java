@@ -4,10 +4,12 @@ public class Board {
     private Piece[][] board;
     private Boolean checkmate = null;//null = neither, false = black win, true = white win;
     private boolean whitePlaying; //false - black, true - white
+    private boolean stalemate;
     King bKing, wKing;
     public Board(){
         board = new Piece[8][8];
         checkmate = false;
+        stalemate = false;
         whitePlaying = true;
         initializeBoard();
     }
@@ -36,6 +38,9 @@ public class Board {
         board[0][7] = new Rook(new int[] {0, 7}, false);
         board[7][7] = new Rook(new int[] {7, 7}, true);
     }
+    public Boolean isCheckmate(){
+        return checkmate;
+    }
     @Override
     public String toString(){
         final String BG1 = "\u001B[47m"; //light
@@ -60,7 +65,7 @@ public class Board {
         }
         return out;
     }
-    public boolean movePiece(String start, String move){
+    public Boolean movePiece(String start, String move){
         int[] startPos = parseMove(start);
         int[] movePos = parseMove(move);
         if(movePos==null || startPos==null){
@@ -73,7 +78,13 @@ public class Board {
         }
         if(board[startPos[0]][startPos[1]] instanceof King){ //check for check and checkmate
             //TODO : check movePos for possible checks, if all possible moves are check, set checkmate to !isWhite of the moving King
+            for(int i = -1; i<=1; i++){
+                for(int j = -1; j<=1; j++){
+                    if(!isCheck(whitePlaying? wKing : bKing, new int[]{startPos[0]+i, startPos[1]+j}) && 2*i+j!=0){
 
+                    }
+                }
+            }
         }
         if(board[startPos[0]][startPos[1]] instanceof Pawn){
             movePos = new int[] {movePos[0],movePos[1], (board[movePos[0]][movePos[1]]!=null && board[movePos[0]][movePos[1]].isWhite()!= board[startPos[0]][startPos[1]].isWhite())? 0:1};//index 2 specifically for pawn, because taking has special movement rule, 1 for taking, 0 for not

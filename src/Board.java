@@ -3,12 +3,12 @@ import java.util.Arrays;
 public class Board {
     private Piece[][] board;
     private Boolean checkmate = null;//null = neither, false = black win, true = white win;
-    private boolean currentPlayer; //false - black, true - white
+    private boolean whitePlaying; //false - black, true - white
     King bKing, wKing;
     public Board(){
         board = new Piece[8][8];
         checkmate = false;
-        currentPlayer = true;
+        whitePlaying = true;
         initializeBoard();
     }
     private void initializeBoard(){
@@ -67,17 +67,21 @@ public class Board {
             System.out.println("invalid move");
             return;
         }
-        if(board[startPos[0]][startPos[1]]==null||board[startPos[0]][startPos[1]].isWhite()!= currentPlayer){
+        if(board[startPos[0]][startPos[1]]==null||board[startPos[0]][startPos[1]].isWhite()!= whitePlaying){
             System.out.println("invalid piece");
             return;
         }
-        if(board[startPos[0]][startPos[1]] instanceof King){//check for check and checkmate
+        if(board[startPos[0]][startPos[1]] instanceof King){ //check for check and checkmate
             //TODO : check movePos for possible checks, if all possible moves are check, set checkmate to !isWhite of the moving King
         }
         if(board[startPos[0]][startPos[1]] instanceof Pawn){
             movePos = new int[] {movePos[0],movePos[1], (board[movePos[0]][movePos[1]]!=null && board[movePos[0]][movePos[1]].isWhite()!= board[startPos[0]][startPos[1]].isWhite())? 0:1};//index 2 specifically for pawn, because taking has special movement rule, 1 for taking, 0 for not
         }
         if(board[startPos[0]][startPos[1]].isLegalMove(movePos)){
+            if(isBlocked(board[startPos[0]][startPos[1]], movePos)){
+                System.out.println("there is a piece in the way");
+                return;
+            }
             board[movePos[0]][movePos[1]] = board[startPos[0]][startPos[1]];
             board[startPos[0]][startPos[1]] = null;
             board[startPos[0]][startPos[1]].setPos(movePos);
@@ -111,5 +115,42 @@ public class Board {
             return null;
         }
         return new int[] {row-1, columns.indexOf(column)};
+    }
+    public boolean isBlocked(Piece p, int[] move){
+        if(p instanceof Knight || p instanceof King){//can't be blocked
+            return false;
+        }
+        if(p instanceof Pawn){//blocked if piece is in front
+            boolean test1 = board[move[0]][move[1]]!=null; //piece at target
+            boolean test2 = false;
+            if(((Pawn) p).isFirstMove()){
+                test2 = board[p.getPos()[0]+1][p.getPos()[1]+1]!=null; //piece in front
+            }
+            return test1 || test2;
+        }
+        if(p instanceof Bishop || (p instanceof Queen && (p.getPos()[0]!=move[0]&&p.getPos()[1]!=move[1]) )){ // bishop or queen w/ bishop movement
+            for(int i = 1; i!=Math.abs(p.getPos()[0]-move[0]); i+= (move[0]-p.getPos()[0])/Math.abs(move[0]-p.getPos()[0])){ // diagonal towards move
+                if(board[p.getPos()[0]+i][p.getPos()[1]+1]!=null){
+                    return true;
+                }
+            }
+        }
+        if(p instanceof Rook ||(p instanceof Queen && (p.getPos()[0]==move[0] || p.getPos()[1]==move[1])) ){ // rook or queen w/ rook movement
+            if(p.getPos()[0]==move[0]){//horizontal towards move
+                for(int i = 0; i!=Math.abs(move[1]-p.getPos()[1]); i+= move[1]-p.getPos()[1]/Math.abs(move[1]-p.getPos()[1])){
+                    if(board[p.getPos()[0]][p.getPos()[1]+i]!=null){
+                        return true;
+                    }
+                }
+            }
+            if(p.getPos()[1]==move[1]){//vertical towards move
+                for(int i = 0; i!=Math.abs(move[0]-p.getPos()[0]); i+= move[0]-p.getPos()[0]/Math.abs(move[0]-p.getPos()[0])){
+                    if(board[p.getPos()[0]+i][p.getPos()[1]]!=null){
+                        return true;
+                    }
+                }
+            }
+        }
+        return true;//placeholder
     }
 }

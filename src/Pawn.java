@@ -12,7 +12,8 @@ public class Pawn extends Piece{
         firstMove = true;
         super.setPos(newPos);
     }
-    public boolean isLegalMove(int[] targetPos, boolean taking){
+    public boolean isLegalMove(int[] targetPos){
+        boolean taking = targetPos[2]==1;
         if(firstMove){
             return targetPos[0]-getPos()[0]>0 && targetPos[0]-getPos()[0]>=2;
         }

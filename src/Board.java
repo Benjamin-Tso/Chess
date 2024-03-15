@@ -2,8 +2,13 @@ import java.util.Arrays;
 
 public class Board {
     private Piece[][] board;
+    private Boolean checkmate = null;//null = neither, false = black win, true = white win;
+    private boolean currentPlayer; //false - black, true - white
+    King bKing, wKing;
     public Board(){
         board = new Piece[8][8];
+        checkmate = false;
+        currentPlayer = true;
         initializeBoard();
     }
     private void initializeBoard(){
@@ -21,7 +26,9 @@ public class Board {
         board[0][3] = new Queen(new int[] {0,3},false);
         board[7][3] = new Queen(new int[] {7,3},true);
         board[0][4] = new King(new int[] {0,4},false);
+        bKing = (King) board[0][4];
         board[7][4] = new King(new int[] {7,4}, true);
+        wKing = (King) board[0][4];
         board[0][5] = new Bishop(new int[]{0,5},false);
         board[7][5] = new Bishop(new int[]{7,5},true);
         board[0][6] = new Knight(new int[] {0,6},false);
@@ -60,11 +67,32 @@ public class Board {
             System.out.println("invalid move");
             return;
         }
-        boolean taking = board[movePos[0]][movePos[1]]!=null && board[movePos[0]][movePos[1]].isWhite()!= board[startPos[0]][startPos[1]].isWhite();
-        if(board[startPos[0]][startPos[1]].isLegalMove(movePos,taking)){
+        if(board[startPos[0]][startPos[1]]==null||board[startPos[0]][startPos[1]].isWhite()!= currentPlayer){
+            System.out.println("invalid piece");
+            return;
+        }
+        if(board[startPos[0]][startPos[1]] instanceof King){//check for check and checkmate
+            //TODO : check movePos for possible checks, if all possible moves are check, set checkmate to !isWhite of the moving King
+        }
+        if(board[startPos[0]][startPos[1]] instanceof Pawn){
+            movePos = new int[] {movePos[0],movePos[1], (board[movePos[0]][movePos[1]]!=null && board[movePos[0]][movePos[1]].isWhite()!= board[startPos[0]][startPos[1]].isWhite())? 0:1};//index 2 specifically for pawn, because taking has special movement rule, 1 for taking, 0 for not
+        }
+        if(board[startPos[0]][startPos[1]].isLegalMove(movePos)){
             board[movePos[0]][movePos[1]] = board[startPos[0]][startPos[1]];
             board[startPos[0]][startPos[1]] = null;
             board[startPos[0]][startPos[1]].setPos(movePos);
+        }
+        else {
+            System.out.println("illegal move");
+            return;
+        }
+        King targetKing = board[movePos[0]][movePos[1]].isWhite()? bKing: wKing;
+        int[] targetPos = targetKing.getPos();
+        if(board[movePos[0]][movePos[1]] instanceof Pawn){
+            targetPos = new int[] {targetPos[0],targetPos[1], 1};
+        }
+        if(board[movePos[0]][movePos[1]].isLegalMove(targetPos)){
+            targetKing.setCheck(true);
         }
     }
     public int[] parseMove(String move){ //turns move like G5 into coordinates {4,6}

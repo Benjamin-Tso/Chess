@@ -7,10 +7,10 @@ public class Rook extends Piece{
     }
 
     @Override
-    public boolean isLegalMove(int[] targetPos, boolean taking) {
+    public boolean isLegalMove(int[] targetPos) {
         return (targetPos[0] == getPos()[0]) == (targetPos[1] != getPos()[1]);
     }
     public boolean isBlocked(){
-
+        return true;
     }
 }

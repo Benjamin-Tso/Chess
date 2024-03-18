@@ -3,7 +3,7 @@ import java.util.Arrays;
 
 public class Board {
     private Piece[][] board;
-    private Boolean checkmate = null;//null = neither, false = black win, true = white win;
+    private Boolean checkmate = null;//null = no mate yet, false = black win, true = white win;
     private boolean whitePlaying; //false - black, true - white
     private boolean stalemate;
     private ArrayList<Piece> blackPieces, whitePieces;

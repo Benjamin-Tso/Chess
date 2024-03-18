@@ -13,9 +13,9 @@ public class Board {
         checkmate = false;
         stalemate = false;
         whitePlaying = true;
-        initializeBoard();
         blackPieces = new ArrayList<>();
         whitePieces = new ArrayList<>();
+        initializeBoard();
     }
     private void initializeBoard(){
         for(int column = 0; column < 8; column++){
@@ -49,8 +49,8 @@ public class Board {
             }
         }
     }
-    public Boolean isCheckmate(){
-        return checkmate;
+    public Boolean[] isMate(){
+        return new Boolean[]{checkmate, stalemate};
     }
     @Override
     public String toString(){
@@ -148,6 +148,7 @@ public class Board {
         if(board[movePos[0]][movePos[1]].isLegalMove(targetPos)){
             targetKing.setCheck(true);
         }
+        whitePlaying = !whitePlaying;
         return true;
     }
 
@@ -166,7 +167,7 @@ public class Board {
         if(!columns.contains(column)) {
             return null;
         }
-        return new int[] {row-1, columns.indexOf(column)};
+        return new int[] {8-row, columns.indexOf(column)};
     }
     public boolean isBlocked(Piece p, int[] move){//called after legal move check, so move is known to be legal
         if(p instanceof Knight || p instanceof King){//can't be blocked

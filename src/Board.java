@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Board {
@@ -5,6 +6,7 @@ public class Board {
     private Boolean checkmate = null;//null = neither, false = black win, true = white win;
     private boolean whitePlaying; //false - black, true - white
     private boolean stalemate;
+    private ArrayList<Piece> blackPieces, whitePieces;
     King bKing, wKing;
     public Board(){
         board = new Piece[8][8];
@@ -12,6 +14,8 @@ public class Board {
         stalemate = false;
         whitePlaying = true;
         initializeBoard();
+        blackPieces = new ArrayList<>();
+        whitePieces = new ArrayList<>();
     }
     private void initializeBoard(){
         for(int column = 0; column < 8; column++){
@@ -37,6 +41,13 @@ public class Board {
         board[7][6] = new Knight(new int[] {7,6},true);
         board[0][7] = new Rook(new int[] {0, 7}, false);
         board[7][7] = new Rook(new int[] {7, 7}, true);
+        for(Piece[] row : board){
+            for(Piece p : row) {
+                if (p != null){
+                    (p.isWhite()? whitePieces:blackPieces).add(p);
+                }
+            }
+        }
     }
     public Boolean isCheckmate(){
         return checkmate;
@@ -48,9 +59,16 @@ public class Board {
         final String BG2 = "\u001B[45;1m";//dark
         final String C2 = "\u001B[35m";// ^ text
         final String RESET = "\u001B[0m";
-        String out = "";
+        String out = "  ";
         boolean bgc = false;
+        for(char c = 'a';c<='h';c++){
+            out+=c+" ";
+        }
+        out+="\n";
+        int count = 8;
         for(Piece[] row : board){
+            out+=count+" ";
+            count--;
             for(Piece p : row){
                 if(p!=null){
                     out+= (p.isWhite() ? "" : "\u001B[30m") + (bgc? BG1 : BG2) + p.getSymbol();
@@ -65,7 +83,7 @@ public class Board {
         }
         return out;
     }
-    public Boolean movePiece(String start, String move){
+    public Boolean movePiece(String start, String move){//null stalemate/checkmate has been reached, false failed to move piece, true succeeded in moving piece
         int[] startPos = parseMove(start);
         int[] movePos = parseMove(move);
         if(movePos==null || startPos==null){
@@ -78,11 +96,25 @@ public class Board {
         }
         if(board[startPos[0]][startPos[1]] instanceof King){ //check for check and checkmate
             //TODO : check movePos for possible checks, if all possible moves are check, set checkmate to !isWhite of the moving King
+            int attackedPositions = 0;
             for(int i = -1; i<=1; i++){
                 for(int j = -1; j<=1; j++){
-                    if(!isCheck(whitePlaying? wKing : bKing, new int[]{startPos[0]+i, startPos[1]+j}) && 2*i+j!=0){
-
+                    if(beingAttacked(whitePlaying? wKing : bKing, new int[]{startPos[0]+i, startPos[1]+j}) && 2*i+j!=0){
+                       attackedPositions++;
                     }
+                }
+            }
+            if(beingAttacked(whitePlaying? wKing : bKing, new int[]{startPos[0], startPos[1]})&&attackedPositions==8){
+                attackedPositions++;
+            }
+            switch (attackedPositions) {
+                case 8 -> {
+                    stalemate = true;
+                    return null;
+                }
+                case 9 -> {
+                    checkmate = !whitePlaying;
+                    return null;
                 }
             }
         }
@@ -94,10 +126,13 @@ public class Board {
                 System.out.println("there is a piece in the way");
                 return false;
             }
+            if(board[movePos[0]][movePos[1]]!=null){
+                (board[movePos[0]][movePos[1]].isWhite()?whitePieces:blackPieces).remove(board[movePos[0]][movePos[1]]);
+            }
             board[movePos[0]][movePos[1]] = board[startPos[0]][startPos[1]];
             board[startPos[0]][startPos[1]] = null;
             board[startPos[0]][startPos[1]].setPos(movePos);
-            if((whitePlaying? wKing : bKing).isCheck()){
+            if((whitePlaying? wKing : bKing).isCheck()){//check if in check after moving, if so undo move
 
             }
         }
@@ -115,6 +150,7 @@ public class Board {
         }
         return true;
     }
+
     public int[] parseMove(String move){ //turns move like G5 into coordinates {4,6}
         String columns = "abcdefgh";
         int row;
@@ -132,7 +168,7 @@ public class Board {
         }
         return new int[] {row-1, columns.indexOf(column)};
     }
-    public boolean isBlocked(Piece p, int[] move){
+    public boolean isBlocked(Piece p, int[] move){//called after legal move check, so move is known to be legal
         if(p instanceof Knight || p instanceof King){//can't be blocked
             return false;
         }
@@ -151,7 +187,7 @@ public class Board {
                 }
             }
         }
-        else if(p instanceof Rook ||(p instanceof Queen && (p.getPos()[0]==move[0] || p.getPos()[1]==move[1])) ){ // rook or queen w/ rook movement
+        else if(p instanceof Rook ||(p instanceof Queen && ((p.getPos()[0]==move[0]) != (p.getPos()[1]==move[1]))) ){ // rook or queen w/ rook movement
             if(p.getPos()[0]==move[0]){//horizontal towards move
                 for(int i = 0; i!=Math.abs(move[1]-p.getPos()[1]); i+= move[1]-p.getPos()[1]/Math.abs(move[1]-p.getPos()[1])){
                     if(board[p.getPos()[0]][p.getPos()[1]+i]!=null){
@@ -169,9 +205,18 @@ public class Board {
         }
         return true;
     }
-    public boolean isCheck(King k, int[] move){
-
-        return true;
+    public boolean beingAttacked(King k, int[] pos){
+        if(k.isCheck()&&pos==k.getPos()){
+            return true;
+        }
+        else{
+            for(Piece p : k.isWhite()?blackPieces:whitePieces){
+                if(p.isLegalMove(k.getPos())&&!isBlocked(p,k.getPos())){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }

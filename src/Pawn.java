@@ -1,8 +1,10 @@
 public class Pawn extends Piece{
     private boolean firstMove;
+    private final int promoteRow;
     public Pawn(int[] pos, boolean white){
         super(pos,white);
         firstMove = false;
+        promoteRow = isWhite()? 0:7;
     }
     public String getSymbol(){
         return "♙";
@@ -15,6 +17,10 @@ public class Pawn extends Piece{
 
     public boolean isFirstMove() {
         return firstMove;
+    }
+
+    public int getPromoteRow() {
+        return promoteRow;
     }
 
     public boolean isLegalMove(int[] targetPos){

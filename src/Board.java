@@ -31,7 +31,7 @@ public class Board {
         board[0][4] = new King(new int[] {0,4},false);
         bKing = (King) board[0][4];
         board[7][4] = new King(new int[] {7,4}, true);
-        wKing = (King) board[0][4];
+        wKing = (King) board[7][4];
         board[0][5] = new Bishop(new int[]{0,5},false);
         board[7][5] = new Bishop(new int[]{7,5},true);
         board[0][6] = new Knight(new int[] {0,6},false);
@@ -73,10 +73,10 @@ public class Board {
             count--;
             for(Piece p : row){
                 if(p!=null){
-                    out+= (p.isWhite() ? "" : "\u001B[30m") + (bgc? BG1 : BG2) + p.getSymbol();
+                    out+= (p.isWhite() ? "" : "\u001B[30m") + (bgc? BG1 : BG2) + p.getSymbol()+RESET;
                 }
                 else{
-                    out+=(bgc? BG1 + C1 : BG2 + C2)+"♙";
+                    out+=(bgc? BG1 + C1 : BG2 + C2)+"♙" + RESET;
                 }
                 bgc = !bgc;
             }
@@ -179,19 +179,24 @@ public class Board {
     }
     public boolean isBlocked(Piece p, int[] move){//called after legal move check, so move is known to be legal
         if(p instanceof Knight || p instanceof King){//can't be blocked
-            return false;
+            return board[move[0]][move[1]]!=null && board[move[0]][move[1]].isWhite() == p.isWhite() ;
         }
         else if(p instanceof Pawn){//blocked if piece is in front
-            boolean test1 = board[move[0]][move[1]]!=null; //piece at target
+            boolean test1 = board[move[0]][move[1]]!=null && move[1]==p.getPos()[1]; //piece at target and not taking
             boolean test2 = false;
             if(((Pawn) p).isFirstMove()){
-                test2 = board[p.getPos()[0]+1][p.getPos()[1]+1]!=null; //piece in front
+                if(p.isWhite()) {
+                    test2 = board[p.getPos()[0] - 1][p.getPos()[1]] != null; //piece in front
+                }
+                else{
+                    test2 = board[p.getPos()[0] + 1][p.getPos()[1]] != null;
+                }
             }
             return test1 || test2;
         }
         else if(p instanceof Bishop || (p instanceof Queen && (p.getPos()[0]!=move[0]&&p.getPos()[1]!=move[1]) )){ // bishop or queen w/ bishop movement
             for(int i = 1; i!=Math.abs(p.getPos()[0]-move[0]); i+= (move[0]-p.getPos()[0])/Math.abs(move[0]-p.getPos()[0])){ // diagonal towards move
-                if(board[p.getPos()[0]+i][p.getPos()[1]+1]!=null){
+                if(board[p.getPos()[0]+i][p.getPos()[1]+1]!=null && !Arrays.equals(new int[]{p.getPos()[0] + i, p.getPos()[1] + 1}, move)){
                     return true;
                 }
             }
@@ -199,14 +204,14 @@ public class Board {
         else if(p instanceof Rook ||(p instanceof Queen && ((p.getPos()[0]==move[0]) != (p.getPos()[1]==move[1]))) ){ // rook or queen w/ rook movement
             if(p.getPos()[0]==move[0]){//horizontal towards move
                 for(int i = 0; i!=Math.abs(move[1]-p.getPos()[1]); i+= move[1]-p.getPos()[1]/Math.abs(move[1]-p.getPos()[1])){
-                    if(board[p.getPos()[0]][p.getPos()[1]+i]!=null){
+                    if(board[p.getPos()[0]][p.getPos()[1]+i]!=null && !Arrays.equals(new int[]{p.getPos()[0],p.getPos()[1]+i},move)){
                         return true;
                     }
                 }
             }
             if(p.getPos()[1]==move[1]){//vertical towards move
                 for(int i = 0; i!=Math.abs(move[0]-p.getPos()[0]); i+= move[0]-p.getPos()[0]/Math.abs(move[0]-p.getPos()[0])){
-                    if(board[p.getPos()[0]+i][p.getPos()[1]]!=null){
+                    if(board[p.getPos()[0]+i][p.getPos()[1]]!=null && !Arrays.equals(new int[]{p.getPos()[0]+i,p.getPos()[1]},move)){
                         return true;
                     }
                 }
@@ -220,8 +225,10 @@ public class Board {
         }
         else{
             for(Piece p : k.isWhite()?blackPieces:whitePieces){
-                if(p instanceof Pawn && p.isLegalMove(new int[] {k.getPos()[0],k.getPos()[1],1}) && !isBlocked(p,k.getPos())){
-
+                if(p instanceof Pawn){
+                    if(p.isLegalMove(new int[] {k.getPos()[0],k.getPos()[1],1}) && !isBlocked(p,k.getPos())){
+                        return true;
+                    }
                 }
                 else if(p.isLegalMove(k.getPos()) && !isBlocked(p,k.getPos())){
                     return true;

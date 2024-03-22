@@ -195,8 +195,8 @@ public class Board {
             return test1 || test2;
         }
         else if(p instanceof Bishop || (p instanceof Queen && (p.getPos()[0]!=move[0]&&p.getPos()[1]!=move[1]) )){ // bishop or queen w/ bishop movement
-            for(int i = 1; i!=Math.abs(p.getPos()[0]-move[0]); i+= (move[0]-p.getPos()[0])/Math.abs(move[0]-p.getPos()[0])){ // diagonal towards move
-                if(board[p.getPos()[0]+i][p.getPos()[1]+1]!=null && !Arrays.equals(new int[]{p.getPos()[0] + i, p.getPos()[1] + 1}, move)){
+            for(int i = 1; i!=Math.abs(p.getPos()[0]-move[0]); i+=1){ // diagonal towards move
+                if(board[p.getPos()[0]+((p.getPos()[0]-move[0]<0)?i:-i)][p.getPos()[1]+((p.getPos()[1]-move[1]<0)?i:-i)]!=null && !Arrays.equals(new int[]{p.getPos()[0] + i, p.getPos()[1] + i}, move)){
                     return true;
                 }
             }
@@ -211,13 +211,16 @@ public class Board {
             }
             if(p.getPos()[1]==move[1]){//vertical towards move
                 for(int i = 0; i!=Math.abs(move[0]-p.getPos()[0]); i+= move[0]-p.getPos()[0]/Math.abs(move[0]-p.getPos()[0])){
+                    if(i==0){
+                        continue;
+                    }
                     if(board[p.getPos()[0]+i][p.getPos()[1]]!=null && !Arrays.equals(new int[]{p.getPos()[0]+i,p.getPos()[1]},move)){
                         return true;
                     }
                 }
             }
         }
-        return true;
+        return false;
     }
     public boolean beingAttacked(King k, int[] pos){
         if(k.isCheck()&&pos==k.getPos()){
@@ -225,13 +228,14 @@ public class Board {
         }
         else{
             for(Piece p : k.isWhite()?blackPieces:whitePieces){
-                if(p instanceof Pawn){
-                    if(p.isLegalMove(new int[] {k.getPos()[0],k.getPos()[1],1}) && !isBlocked(p,k.getPos())){
+                if(p.getPos()!=pos) {
+                    if (p instanceof Pawn) {
+                        if (p.isLegalMove(new int[]{k.getPos()[0], k.getPos()[1], 1}) && !isBlocked(p, k.getPos())) {
+                            return true;
+                        }
+                    } else if (p.isLegalMove(k.getPos()) && !isBlocked(p, k.getPos())) {
                         return true;
                     }
-                }
-                else if(p.isLegalMove(k.getPos()) && !isBlocked(p,k.getPos())){
-                    return true;
                 }
             }
         }

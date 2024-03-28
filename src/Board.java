@@ -101,12 +101,15 @@ public class Board {
             int attackedPositions = 0;
             for(int i = -1; i<=1; i++){
                 for(int j = -1; j<=1; j++){
-                    if(beingAttacked(whitePlaying? wKing : bKing, new int[]{startPos[0]+i, startPos[1]+j}) && 2*i+j!=0){
+                    if(startPos[0]+i<0 || startPos[1]+j<0 || startPos[0]+i>7 || startPos[1]+j>7){
+                        attackedPositions++;
+                    }
+                    else if(beingAttacked(whitePlaying? wKing : bKing, new int[]{startPos[0]+i, startPos[1]+j}).size()>0 && 2*i+j!=0){
                        attackedPositions++;
                     }
                 }
             }
-            if(beingAttacked(whitePlaying? wKing : bKing, new int[]{startPos[0], startPos[1]})&&attackedPositions==8){
+            if(beingAttacked(whitePlaying? wKing : bKing, new int[]{startPos[0], startPos[1]}).size()>0&&attackedPositions==8){
                 attackedPositions++;
             }
             switch (attackedPositions) {
@@ -133,7 +136,7 @@ public class Board {
             board[movePos[0]][movePos[1]] = board[startPos[0]][startPos[1]];
             board[startPos[0]][startPos[1]] = null;
             board[movePos[0]][movePos[1]].setPos(movePos);
-            if(beingAttacked(whitePlaying? wKing : bKing,whitePlaying? wKing.getPos() : bKing.getPos())){//check if in check after moving, if so undo move
+            if(beingAttacked(whitePlaying? wKing : bKing,whitePlaying? wKing.getPos() : bKing.getPos()).size()>0){//check if in check after moving, if so undo move
                 board[startPos[0]][startPos[1]] = board[movePos[0]][movePos[1]];
                 board[movePos[0]][movePos[1]] = null;
                 board[startPos[0]][startPos[1]].setPos(movePos);
@@ -203,18 +206,18 @@ public class Board {
         }
         else if(p instanceof Rook ||(p instanceof Queen && ((p.getPos()[0]==move[0]) != (p.getPos()[1]==move[1]))) ){ // rook or queen w/ rook movement
             if(p.getPos()[0]==move[0]){//horizontal towards move
-                for(int i = 0; i!=Math.abs(move[1]-p.getPos()[1]); i+= move[1]-p.getPos()[1]/Math.abs(move[1]-p.getPos()[1])){
+                for(int i = 0; i!=Math.abs(move[1]-p.getPos()[1]); i+= (move[1]-p.getPos()[1])/Math.abs(move[1]-p.getPos()[1])){
                     if(board[p.getPos()[0]][p.getPos()[1]+i]!=null && !Arrays.equals(new int[]{p.getPos()[0],p.getPos()[1]+i},move)){
                         return true;
                     }
                 }
             }
             if(p.getPos()[1]==move[1]){//vertical towards move
-                for(int i = 0; i!=Math.abs(move[0]-p.getPos()[0]); i+= move[0]-p.getPos()[0]/Math.abs(move[0]-p.getPos()[0])){
+                for(int i = 0; i!=Math.abs(move[0]-p.getPos()[0]); i+= (move[0]-p.getPos()[0])/Math.abs(move[0]-p.getPos()[0])){
                     if(i==0){
-                        continue;
+                        i+=move[0]-p.getPos()[0]/Math.abs(move[0]-p.getPos()[0]);
                     }
-                    if(board[p.getPos()[0]+i][p.getPos()[1]]!=null && !Arrays.equals(new int[]{p.getPos()[0]+i,p.getPos()[1]},move)){
+                    if(board[p.getPos()[0]+i][p.getPos()[1]]!=null && board[p.getPos()[0]+i][p.getPos()[1]].isWhite()!=p.isWhite()){
                         return true;
                     }
                 }
@@ -222,24 +225,20 @@ public class Board {
         }
         return false;
     }
-    public boolean beingAttacked(King k, int[] pos){
-        if(k.isCheck()&&pos==k.getPos()){
-            return true;
-        }
-        else{
+    public ArrayList<Piece> beingAttacked(King k, int[] pos){
+        ArrayList<Piece> attackers = new ArrayList<>();
             for(Piece p : k.isWhite()?blackPieces:whitePieces){
                 if(p.getPos()!=pos) {
                     if (p instanceof Pawn) {
                         if (p.isLegalMove(new int[]{k.getPos()[0], k.getPos()[1], 1}) && !isBlocked(p, k.getPos())) {
-                            return true;
+                            attackers.add(p);
                         }
                     } else if (p.isLegalMove(k.getPos()) && !isBlocked(p, k.getPos())) {
-                        return true;
+                        attackers.add(p);
                     }
                 }
             }
-        }
-        return false;
+        return attackers;
     }
 
 }

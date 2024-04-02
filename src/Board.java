@@ -96,30 +96,38 @@ public class Board {
             System.out.println("invalid piece");
             return false;
         }
-        if(board[startPos[0]][startPos[1]] instanceof King){ //check for check and checkmate
-            //TODO : check movePos for possible checks, if all possible moves are check, set checkmate to !isWhite of the moving King
-            int attackedPositions = 0;
-            for(int i = -1; i<=1; i++){
-                for(int j = -1; j<=1; j++){
-                    if(startPos[0]+i<0 || startPos[1]+j<0 || startPos[0]+i>7 || startPos[1]+j>7){
+        //check movePos for possible checks, if all possible moves are check, check all other friendly pieces to see if they can block, if none can block, set checkmate to !isWhite of the moving King
+        int attackedPositions = 0;
+        for(int i = -1; i<=1; i++){
+            for(int j = -1; j<=1; j++){
+                if(startPos[0]+i<0 || startPos[1]+j<0 || startPos[0]+i>7 || startPos[1]+j>7){
+                    attackedPositions++;
+                }
+                else if(beingAttacked(whitePlaying? wKing : bKing, new int[]{startPos[0]+i, startPos[1]+j}).size()>0 && 2*i+j!=0){
+                    int temp1 = beingAttacked(whitePlaying? wKing : bKing, new int[]{startPos[0]+i, startPos[1]+j}).size();
+                    int temp2 = 0;
+                    for(Piece p : beingAttacked(whitePlaying? wKing : bKing, new int[]{startPos[0]+i, startPos[1]+j})){
+                        if(canBeBlocked(p,new int[]{startPos[0]+i, startPos[1]+j})){
+                            temp2++;
+                        }
+                    }
+                    if(temp1!=temp2){
                         attackedPositions++;
                     }
-                    else if(beingAttacked(whitePlaying? wKing : bKing, new int[]{startPos[0]+i, startPos[1]+j}).size()>0 && 2*i+j!=0){
-                       attackedPositions++;
-                    }
                 }
             }
-            if(beingAttacked(whitePlaying? wKing : bKing, new int[]{startPos[0], startPos[1]}).size()>0&&attackedPositions==8){
-                attackedPositions++;
+        }
+        if(beingAttacked(whitePlaying? wKing : bKing, new int[]{startPos[0], startPos[1]}).size()>0&&attackedPositions==8){
+            attackedPositions++;
+        }
+
+        switch (attackedPositions) {
+            case 8 -> {
+                return null;
             }
-            switch (attackedPositions) {
-                case 8 -> {
-                    return null;
-                }
-                case 9 -> {
-                    checkmate = !whitePlaying;
-                    return null;
-                }
+            case 9 -> {
+                checkmate = !whitePlaying;
+                return null;
             }
         }
         if(board[startPos[0]][startPos[1]] instanceof Pawn){
@@ -225,6 +233,42 @@ public class Board {
         }
         return false;
     }
+    public boolean canBeBlocked(Piece p, int[] move){
+        ArrayList<Piece> opponentPieces = p.isWhite()? blackPieces : whitePieces ;
+        if(p instanceof Bishop || (p instanceof Queen && (p.getPos()[0]!=move[0]&&p.getPos()[1]!=move[1]) )){ // bishop or queen w/ bishop movement
+            for(int i = 1; i!=Math.abs(p.getPos()[0]-move[0]); i+=1){ // diagonal towards move
+                for(Piece oP : opponentPieces){
+                    int[] target = (oP instanceof Pawn)? new int[]{p.getPos()[0]+((p.getPos()[0]-move[0]<0)?i:-i),p.getPos()[1]+((p.getPos()[1]-move[1]<0)?i:-i),1} : new int[]{p.getPos()[0]+((p.getPos()[0]-move[0]<0)?i:-i),p.getPos()[1]+((p.getPos()[1]-move[1]<0)?i:-i)};
+                    if(oP.isLegalMove(target) && !isBlocked(oP, target)){
+                        return true;
+                    }
+                }
+            }
+        }
+        else if(p instanceof Rook ||(p instanceof Queen && ((p.getPos()[0]==move[0]) != (p.getPos()[1]==move[1]))) ){ // rook or queen w/ rook movement
+            if(p.getPos()[0]==move[0]){//horizontal towards move
+                for(int i = 0; i!=Math.abs(move[1]-p.getPos()[1]); i+= (move[1]-p.getPos()[1])/Math.abs(move[1]-p.getPos()[1])){
+                    for(Piece oP : opponentPieces){
+                        int[] target = (oP instanceof Pawn)? new int[]{p.getPos()[0],p.getPos()[1]+i,1}:new int[]{p.getPos()[0],p.getPos()[1]+i};
+                        if(oP.isLegalMove(target) && !isBlocked(oP,target)){
+                            return true;
+                        }
+                    }
+                }
+            }
+            if(p.getPos()[1]==move[1]){//vertical towards move
+                for(int i = 0; i!=Math.abs(move[0]-p.getPos()[0]); i+= (move[0]-p.getPos()[0])/Math.abs(move[0]-p.getPos()[0])){
+                    for(Piece oP : opponentPieces){
+                        int[] target = (oP instanceof Pawn)? new int[]{p.getPos()[0]+i,p.getPos()[1],1}:new int[]{p.getPos()[0]+i,p.getPos()[1]};
+                        if(oP.isLegalMove(new int[] {p.getPos()[0]+i,p.getPos()[1]}) &&  !isBlocked(oP,new int[]{p.getPos()[0]+i,p.getPos()[1]} )){
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
     public ArrayList<Piece> beingAttacked(King k, int[] pos){
         ArrayList<Piece> attackers = new ArrayList<>();
             for(Piece p : k.isWhite()?blackPieces:whitePieces){
@@ -240,5 +284,4 @@ public class Board {
             }
         return attackers;
     }
-
 }

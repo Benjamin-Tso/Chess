@@ -221,9 +221,9 @@ public class Board {
                 }
             }
             if(p.getPos()[1]==move[1]){//vertical towards move
-                for(int i = 0; i!=Math.abs(move[0]-p.getPos()[0]); i+= (move[0]-p.getPos()[0])/Math.abs(move[0]-p.getPos()[0])){
+                for(int i = 0; i!=move[0]-p.getPos()[0]; i+= (move[0]-p.getPos()[0])/Math.abs(move[0]-p.getPos()[0])){
                     if(i==0){
-                        i+=move[0]-p.getPos()[0]/Math.abs(move[0]-p.getPos()[0]);
+                        continue;
                     }
                     if(board[p.getPos()[0]+i][p.getPos()[1]]!=null && board[p.getPos()[0]+i][p.getPos()[1]].isWhite()!=p.isWhite()){
                         return true;
